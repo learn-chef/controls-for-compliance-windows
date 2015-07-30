@@ -6,7 +6,7 @@
 control_group 'Validate web services' do
   control 'Ensure no web files are owned by the Administrators group' do
     Dir.glob('c:/inetpub/wwwroot/**/*.htm') {|web_file|
-      it "#{web_file} is not owned by Administrators" do
+      it "#{web_file} must not be owned by Administrators" do
         expect(command("(Get-ChildItem #{web_file} | Get-Acl).Owner").stdout).to_not match(/Administrators$/)
       end
     }
