@@ -14,13 +14,12 @@ control_group 'Validate web services' do
 end
 
 control_group 'Validate network configuration and firewalls' do
-  (ICMPv4 ICMPv6).each { |protocol|
-    control "Ensure the firewall blocks public #{protocol} Echo Request messages" do
+  [{:name => 'ICMPv4', :type => 8,}, {:name => 'ICMPv6', :type => 128 }].each { |protocol|
+    control "Ensure the firewall blocks public #{protocol[:name]} Echo Request messages" do
       it 'has at least one rule that blocks access' do
-        let(:icmp_types) { { 'ICMPv4' => 8, 'ICMPv6' => 128 } }
         expect(command(<<-EOH
-          (Get-NetFirewallPortFilter -Protocol #{protocol} |
-          Where-Object { $_.IcmpType -eq #{icmp_types[#{protocol}]} } |
+          (Get-NetFirewallPortFilter -Protocol #{protocol[:name]} |
+          Where-Object { $_.IcmpType -eq #{protocol[:type]} } |
           Get-NetFirewallRule |
           Where-Object {
             ($_.Profile -eq "Public") -and
