@@ -3,7 +3,7 @@
 # Recipe:: default
 #
 # Copyright (c) 2015 The Authors, All Rights Reserved.
-# Block ICMPv4 and ICMPv6 Echo Request messages in the public profile.
+# Block ICMPv4 Echo Request messages in the public profile.
 powershell_script 'Block ICMPv4 Echo Request messages' do
   code <<-EOH
     Get-NetFirewallPortFilter -Protocol ICMPv4 |
