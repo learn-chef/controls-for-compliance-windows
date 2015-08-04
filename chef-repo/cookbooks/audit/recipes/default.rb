@@ -12,3 +12,23 @@ control_group 'Validate web services' do
     }
   end
 end
+
+control_group 'Validate network configuration and firewalls' do
+  %w(ICMPv4 ICMPv6).each { |protocol|
+    control "Ensure the firewall blocks public #{protocol} Echo Request messages" do
+      it 'has at least one rule that blocks access' do
+        expect(command(<<-EOH
+          (Get-NetFirewallPortFilter -Protocol #{protocol} |
+            Get-NetFirewallRule |
+            Where-Object {
+              ($_.Profile -eq "Public") -and
+              ($_.Enabled -eq "True") -and
+              ($_.Action -eq "Block")
+            }
+          ).Count -gt 0
+          EOH
+        ).stdout).to match(/True/)
+      end
+    end
+  }
+end
