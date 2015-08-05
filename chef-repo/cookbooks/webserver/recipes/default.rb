@@ -3,11 +3,36 @@
 # Recipe:: default
 #
 # Copyright (c) 2015 The Authors, All Rights Reserved.
+# Block ICMPv4 Echo Request messages in the public profile.
+powershell_script 'Block ICMPv4 Echo Request messages' do
+  code <<-EOH
+    Get-NetFirewallPortFilter -Protocol ICMPv4 |
+    Get-NetFirewallRule |
+    Where-Object {
+      ($_.Profile -eq "Public") -and
+      ($_.Direction -eq "Inbound") -and
+      ($_.Action -eq "Allow") } |
+    Set-NetFirewallRule -Action Block -IcmpType 8 -Enabled True
+  EOH
+  guard_interpreter :powershell_script
+  not_if <<-EOH
+    (Get-NetFirewallPortFilter -Protocol ICMPv4 |
+    Where-Object { $_.IcmpType -eq 8 } |
+    Get-NetFirewallRule |
+    Where-Object {
+      ($_.Profile -eq "Public") -and
+      ($_.Direction -eq "Inbound") -and
+      ($_.Enabled -eq "True") -and
+      ($_.Action -eq "Block") } |
+    Measure-Object).Count -gt 0
+  EOH
+end
+
 # Install IIS.
 powershell_script 'Install IIS' do
   code 'Add-WindowsFeature Web-Server'
   guard_interpreter :powershell_script
-  not_if "(Get-WindowsFeature -Name Web-Server).Installed"
+  not_if '(Get-WindowsFeature -Name Web-Server).Installed'
 end
 
 # Enable and start W3SVC.

@@ -12,3 +12,22 @@ control_group 'Validate web services' do
     }
   end
 end
+
+control_group 'Validate network configuration and firewalls' do
+  control 'Ensure the firewall blocks public ICMPv4 Echo Request messages' do
+    it 'has at least one rule that blocks access' do
+      expect(command(<<-EOH
+        (Get-NetFirewallPortFilter -Protocol ICMPv4 |
+        Where-Object { $_.IcmpType -eq 8 } |
+        Get-NetFirewallRule |
+        Where-Object {
+          ($_.Profile -eq "Public") -and
+          ($_.Direction -eq "Inbound") -and
+          ($_.Enabled -eq "True") -and
+          ($_.Action -eq "Block") } |
+        Measure-Object).Count -gt 0
+        EOH
+      ).stdout).to match(/True/)
+    end
+  end
+end
