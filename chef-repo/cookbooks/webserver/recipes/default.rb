@@ -6,13 +6,7 @@
 # Block ICMPv4 Echo Request messages in the public profile.
 powershell_script 'Block ICMPv4 Echo Request messages' do
   code <<-EOH
-    Get-NetFirewallPortFilter -Protocol ICMPv4 |
-    Get-NetFirewallRule |
-    Where-Object {
-      ($_.Profile -eq "Public") -and
-      ($_.Direction -eq "Inbound") -and
-      ($_.Action -eq "Allow") } |
-    Set-NetFirewallRule -Action Block -IcmpType 8 -Enabled True
+    New-NetFirewallRule -DisplayName "File and Printer Sharing (Echo Request - ICMPv4-In)" -Group "File and Printer Sharing" -Action Block -Description "Echo Request messages are sent as ping requests to other nodes." -Direction Inbound -Enabled True -IcmpType 8 -Profile Public -Protocol ICMPv4
   EOH
   guard_interpreter :powershell_script
   not_if <<-EOH
@@ -23,6 +17,7 @@ powershell_script 'Block ICMPv4 Echo Request messages' do
       ($_.Profile -eq "Public") -and
       ($_.Direction -eq "Inbound") -and
       ($_.Enabled -eq "True") -and
+      ($_.Group -eq "File and Printer Sharing") -and
       ($_.Action -eq "Block") } |
     Measure-Object).Count -gt 0
   EOH
