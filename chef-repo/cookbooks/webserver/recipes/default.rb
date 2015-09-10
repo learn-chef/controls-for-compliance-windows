@@ -7,14 +7,7 @@
 [{:name => 'ICMPv4', :type => 8,}, {:name => 'ICMPv6', :type => 128 }].each { |protocol|
   powershell_script "Block #{protocol[:name]} Echo Request messages" do
     code <<-EOH
-      Get-NetFirewallPortFilter -Protocol #{protocol[:name]} |
-      Where-Object { $_.IcmpType -eq #{protocol[:type]} } |
-      Get-NetFirewallRule |
-      Where-Object {
-        ($_.Profile -eq "Public") -and
-        ($_.Direction -eq "Inbound") -and
-        ($_.Action -eq "Allow") } |
-      Set-NetFirewallRule -Action Block -Enabled True
+      New-NetFirewallRule -DisplayName "File and Printer Sharing (Echo Request - #{protocol[:name]}-In)" -Group "File and Printer Sharing" -Action Block -Description "Echo Request messages are sent as ping requests to other nodes." -Direction Inbound -Enabled True -IcmpType #{protocol[:type]} -Profile Public -Protocol #{protocol[:name]}
     EOH
     guard_interpreter :powershell_script
     not_if <<-EOH
@@ -25,6 +18,7 @@
         ($_.Profile -eq "Public") -and
         ($_.Direction -eq "Inbound") -and
         ($_.Enabled -eq "True") -and
+        ($_.Group -eq "File and Printer Sharing") -and
         ($_.Action -eq "Block") } |
       Measure-Object).Count -gt 0
     EOH
