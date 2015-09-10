@@ -24,6 +24,7 @@ control_group 'Validate network configuration and firewalls' do
           ($_.Profile -eq "Public") -and
           ($_.Direction -eq "Inbound") -and
           ($_.Enabled -eq "True") -and
+          ($_.Group -eq "File and Printer Sharing") -and
           ($_.Action -eq "Block") } |
         Measure-Object).Count -gt 0
         EOH
